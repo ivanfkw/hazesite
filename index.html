@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HAZE // Secure Portal v0.1 Beta</title>
+  <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Unbounded:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    .font-display { font-family: 'Unbounded', sans-serif; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+    .font-sans { font-family: 'Inter', sans-serif; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(3, 3, 5, 0.9); }
+    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.4); }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-fade { animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+    @keyframes floatSlow { 0%, 100% { transform: translateY(0px) scale(1); } 50% { transform: translateY(-15px) scale(1.05); } }
+    .animate-float { animation: floatSlow 8s ease-in-out infinite; }
+
+    @keyframes leaderGlow {
+      0%, 100% { box-shadow: 0 0 25px rgba(251, 191, 36, 0.2), inset 0 1px 0 rgba(251, 191, 36, 0.3); border-color: rgba(251, 191, 36, 0.5); }
+      50% { box-shadow: 0 0 45px rgba(251, 191, 36, 0.4), inset 0 1px 0 rgba(251, 191, 36, 0.6); border-color: rgba(251, 191, 36, 0.8); }
+    }
+    .leader-card-glow { animation: leaderGlow 4s infinite ease-in-out; }
+
+    @keyframes devGlow {
+      0%, 100% { box-shadow: 0 0 20px rgba(6, 182, 212, 0.2); border-color: rgba(6, 182, 212, 0.4); }
+      50% { box-shadow: 0 0 35px rgba(6, 182, 212, 0.4); border-color: rgba(6, 182, 212, 0.7); }
+    }
+    .dev-card-glow { animation: devGlow 4s infinite ease-in-out; }
+
+    @keyframes collerGlow {
+      0%, 100% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.4); }
+      50% { box-shadow: 0 0 35px rgba(239, 68, 68, 0.4); border-color: rgba(239, 68, 68, 0.7); }
+    }
+    .coller-card-glow { animation: collerGlow 4s infinite ease-in-out; }
+
+    .glass-card {
+      background: rgba(12, 12, 16, 0.75);
+      backdrop-filter: blur(30px);
+      -webkit-backdrop-filter: blur(30px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 25px 50px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.18);
+    }
+  </style>
+</head>
+<body class="bg-[#030305] text-zinc-100 font-sans selection:bg-white selection:text-black">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useRef, useEffect } = React;
+
+    const LEADERSHIP_DATA = {
+      Miami: {
+        serverTitle: 'MIAMI #8',
+        serverNumber: '8',
+        leader: { nick: 'Rulf Haze', staticId: '298624', discord: 'anirool', role: 'Leader Miami', badgeText: 'ЛИДЕР СЕМЬИ', badgeType: 'leader' },
+        owners: [
+          { nick: 'Winston Haze', staticId: '282231', discord: 'k_5504', role: 'Owner Miami', badgeText: 'РАЗРАБОТЧИК САЙТА', badgeType: 'dev', subNote: 'Разработчик сайта и инфраструктуры портала семьи Haze.' },
+          { nick: 'Swapper Haze', staticId: '90295', discord: 'kst_swaper', role: 'Owner Miami', badgeText: 'ГЛАВНЫЙ КОЛЛЕР', badgeType: 'coller', subNote: 'Главный коллер семьи. Управление составом на каптах, аирдропах и ВЗМ.' },
+          { nick: 'Marcus Haze', staticId: '229798', discord: 'epsik09', role: 'Owner Miami', badgeText: 'HIGH OWNER // MIAMI', badgeType: 'marcus', subNote: 'Высокое руководство и контроль ключевых направлений семьи на Miami.' },
+          { nick: 'ed fox', staticId: '232251', discord: '899mods', role: 'Owner Miami', badgeText: 'OWNER // MIAMI', badgeType: 'mono', subNote: 'Управляющий состав семьи, контроль активности на сервере.' },
+        ],
+      },
+      Memphis: {
+        serverTitle: 'MEMPHIS #19',
+        serverNumber: '19',
+        leader: { nick: 'Swapper Haze', staticId: '90295', discord: 'kst_swaper', role: 'Leader Memphis', badgeText: 'ЛИДЕР СЕМЬИ', badgeType: 'leader' },
+        owners: [
+          { nick: 'Markus Shade', staticId: '123524', discord: 'epsik09', role: 'Owner Memphis', badgeText: 'OWNER // MEMPHIS', badgeType: 'mono', subNote: 'Управляющий состав семьи на сервере Memphis #19.' },
+          { nick: 'Georgiy Asford', staticId: '166366', discord: 'vertigo555gsha', role: 'Owner Memphis', badgeText: 'OWNER // MEMPHIS', badgeType: 'mono', subNote: 'Управляющий состав семьи на сервере Memphis #19.' },
+        ],
+      },
+    };
+
+    const getRootPngFilename = (categoryId, locationName) => {
+      if (categoryId === 'callouts') return `image/${locationName}-с-обозначениями.jpg`;
+      if (categoryId === 'mcl') {
+        if (locationName === 'Windmill') return `image/Windmill-mcl.png`;
+        if (locationName === 'Redwood') return `image/Redwood-mcl.png`;
+        if (locationName === 'Mirror') return `image/Mirror-mcl.png`;
+        if (locationName === 'Ghetto') return `image/Ghetto-mcl.png`;
+        if (locationName === 'Industrial Area') return `image/Industrial Area-mcl.png`;
+        if (locationName === 'Vinewood') return `image/Vinewood-mcl.png`;
+        if (locationName === 'Sandy Shores') return `image/Sandy Shores-mcl.png`;
+        if (locationName === 'Farm') return `image/Farm-mcl.png`;
+        if (locationName === 'City') return `image/City-mcl.png`;
+        return `image/${locationName}-mcl.png`;
+      }
+      if (categoryId === 'airdrop') return `image/${locationName}-airdrop-full.png`;
+      if (categoryId === 'dealers') return `image/Цеха_Дилеры-cx-dealers.png`;
+      if (categoryId === 'zancudo') return `image/Fort Zancudo-fort-zancudo.png`;
+      if (categoryId === 'vzm') return `image/ВЗМ-vzm.png`;
+      return `image/${locationName}.png`;
+    };
+
+    const CALLOUTS_LOCATIONS = ['Церковь', 'Завод', 'Миррор', 'Палето', 'Тату', 'Особняк', 'Рокфорд', 'Муравейник', 'Сендик', 'Пирс', 'Стройка', 'Ветряки', 'Ферма', 'Порт'];
+    const AIRDROP_LOCATIONS = ['Порт', 'ВЗМ', 'Завод', 'Нефть', 'Самолёты', 'Киностудия', 'Апельсин', 'Ветряки', 'Стройка', 'Подъёмник', 'Петля', 'Альтруисты', 'Меды', 'Юнион', 'Буквы', 'Обсерватория', 'ВЗХ', 'Церковь'];
+
+    const MAP_CATEGORIES = [
+      { id: 'callouts', name: 'Карты обозначений', groups: [{ title: 'КАРТЫ', items: CALLOUTS_LOCATIONS.map((name, i) => ({ id: `callouts-${i}`, code: `CL-${i + 1 < 10 ? '0' + (i + 1) : i + 1}`, name, rootPng: getRootPngFilename('callouts', name), tacticSummary: `Стандартный тактический разбор сектора "${name}". Контроль ключевых позиций состава HAZE.` })) }] },
+      { id: 'mcl', name: 'Карты MCL', groups: [
+        { title: 'MCL', items: ['Ghetto', 'Industrial Area', 'Vinewood', 'Sandy Shores', 'Farm', 'City', 'Mirror'].map((name, i) => ({ id: `mcl-${i}`, code: `MCL-${i + 1 < 10 ? '0' + (i + 1) : i + 1}`, name, rootPng: getRootPngFilename('mcl', name), tacticSummary: `Турнирная карта MCL "${name}". Расстановка ролей и удержание позиций.` })) },
+        { title: 'ВОЙНА ЗА ЗОНЫ', items: ['Windmill', 'Redwood'].map((name, i) => ({ id: `vzm-zone-${i}`, code: `WZ-${i + 1}`, name, rootPng: getRootPngFilename('mcl', name), tacticSummary: `Война за зоны на объекте "${name}". Сбор семьи и перехват инициативы.` })) }
+      ]},
+      { id: 'airdrop', name: 'Аирдроп', groups: [{ title: 'КАРТЫ', items: AIRDROP_LOCATIONS.map((name, i) => ({ id: `airdrop-${i}`, code: `AD-${i + 1 < 10 ? '0' + (i + 1) : i + 1}`, name, rootPng: getRootPngFilename('airdrop', name), tacticSummary: `Точки сброса и споты на аирдропе "${name}". Оборона периметра.` })) }] },
+      { id: 'dealers', name: 'Цеха\\Дилеры', groups: [{ title: 'ОБЪЕКТ', items: [{ id: 'dealers-0', code: 'DL-01', name: 'Цеха \\ Дилеры', rootPng: getRootPngFilename('dealers', 'Цеха \\ Дилеры'), tacticSummary: 'Основная карта цехов и дилерских точек для контроля производства.' }] }] },
+      { id: 'zancudo', name: 'Форт Занкудо', groups: [{ title: 'ОБЪЕКТ', items: [{ id: 'zancudo-0', code: 'FZ-01', name: 'Форт Занкудо', rootPng: getRootPngFilename('zancudo', 'Форт Занкудо'), tacticSummary: 'Основная схема военного объекта Форт Занкудо для штурма и обороны.' }] }] },
+      { id: 'vzm', name: 'ВЗМ', groups: [{ title: 'ОБЪЕКТ', items: [{ id: 'vzm-0', code: 'VZM-01', name: 'ВЗМ', rootPng: getRootPngFilename('vzm', 'ВЗМ'), tacticSummary: 'Основная тактическая карта для Войны за материалы (ВЗМ).' }] }] }
+    ];
+
+    function CategoryIcon({ id, active }) {
+      const cls = `w-4 h-4 transition-all duration-300 ${active ? 'text-white scale-110 drop-shadow-[0_0_8px_rgba(255,255,255,0.7)]' : 'text-zinc-500 group-hover:text-zinc-300'}`;
+      return <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><circle cx="12" cy="12" r="9" /></svg>;
+    }
+
+    function TacticalMapCanvas({ location }) {
+      const canvasRef = useRef(null);
+      const [tool, setTool] = useState('pan');
+      const [strokeColor, setStrokeColor] = useState('#ef4444');
+      const [lineWidth, setLineWidth] = useState(8);
+      const [markerLabel, setMarkerLabel] = useState('1');
+      const [customText, setCustomText] = useState('HAZE');
+      const [history, setHistory] = useState([]);
+      const [isDrawing, setIsDrawing] = useState(false);
+      const [startPos, setStartPos] = useState({ x: 0, y: 0 });
+      const [currentPoints, setCurrentPoints] = useState([]);
+      
+      const [scale, setScale] = useState(1);
+      const [pan, setPan] = useState({ x: 0, y: 0 });
+      const [isPanning, setIsPanning] = useState(false);
+      const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+      const [loadedImg, setLoadedImg] = useState(null);
+
+      useEffect(() => {
+        const saved = localStorage.getItem(`haze_tactic_${location.id}`);
+        if (saved) { try { setHistory(JSON.parse(saved)); } catch { setHistory([]); } } else { setHistory([]); }
+        setScale(1);
+        setPan({ x: 0, y: 0 });
+      }, [location.id]);
+
+      useEffect(() => {
+        try { localStorage.setItem(`haze_tactic_${location.id}`, JSON.stringify(history)); } catch {}
+      }, [history, location.id]);
+
+      useEffect(() => {
+        if (!location.rootPng) { setLoadedImg(null); return; }
+        const img = new Image();
+        img.onload = () => setLoadedImg(img);
+        img.onerror = () => setLoadedImg(null);
+        img.src = location.rootPng;
+      }, [location.rootPng]);
+
+      useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+
+        const W = loadedImg ? loadedImg.naturalWidth || 1600 : 1600;
+        const H = loadedImg ? loadedImg.naturalHeight || 1200 : 1200;
+        if (canvas.width !== W) canvas.width = W;
+        if (canvas.height !== H) canvas.height = H;
+
+        ctx.clearRect(0, 0, W, H);
+        if (loadedImg) {
+          ctx.drawImage(loadedImg, 0, 0, W, H);
+          ctx.fillStyle = 'rgba(6, 11, 25, 0.45)';
+          ctx.fillRect(0, 0, W, H);
+        } else {
+          ctx.fillStyle = '#09090b';
+          ctx.fillRect(0, 0, W, H);
+          ctx.fillStyle = 'rgba(255,255,255,0.08)';
+          ctx.font = '700 36px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(`HAZE // ${location.name.toUpperCase()}`, W / 2, H / 2 - 20);
+          ctx.font = '500 16px monospace';
+          ctx.fillStyle = 'rgba(255,255,255,0.5)';
+          ctx.fillText(`Файл не найден: ${location.rootPng}`, W / 2, H / 2 + 20);
+        }
+
+        history.forEach((el) => {
+          ctx.save();
+          ctx.strokeStyle = el.color;
+          ctx.fillStyle = el.color;
+          ctx.lineWidth = el.width || 8;
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+
+          if (el.type === 'pen' && el.points.length > 1) {
+            ctx.beginPath();
+            ctx.moveTo(el.points[0].x, el.points[0].y);
+            el.points.forEach((p) => ctx.lineTo(p.x, p.y));
+            ctx.stroke();
+          } else if (el.type === 'arrow') {
+            const dx = el.end.x - el.start.x;
+            const dy = el.end.y - el.start.y;
+            const angle = Math.atan2(dy, dx);
+            ctx.beginPath(); ctx.moveTo(el.start.x, el.start.y); ctx.lineTo(el.end.x, el.end.y); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(el.end.x, el.end.y);
+            ctx.lineTo(el.end.x - 24 * Math.cos(angle - Math.PI / 6), el.end.y - 24 * Math.sin(angle - Math.PI / 6));
+            ctx.lineTo(el.end.x - 24 * Math.cos(angle + Math.PI / 6), el.end.y - 24 * Math.sin(angle + Math.PI / 6));
+            ctx.closePath(); ctx.fill();
+          } else if (el.type === 'circle') {
+            const rx = Math.hypot(el.end.x - el.start.x, el.end.y - el.start.y);
+            ctx.beginPath(); ctx.arc(el.start.x, el.start.y, rx, 0, Math.PI * 2);
+            ctx.fillStyle = `${el.color}33`; ctx.fill(); ctx.stroke();
+          } else if (el.type === 'marker') {
+            ctx.beginPath(); ctx.arc(el.pos.x, el.pos.y, 24, 0, Math.PI * 2);
+            ctx.fillStyle = '#000000'; ctx.fill(); ctx.lineWidth = 4; ctx.strokeStyle = el.color; ctx.stroke();
+            ctx.fillStyle = '#ffffff'; ctx.font = '700 18px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(el.label || '1', el.pos.x, el.pos.y);
+          } else if (el.type === 'text') {
+            ctx.font = '700 20px monospace';
+            const metrics = ctx.measureText(el.text);
+            ctx.fillStyle = 'rgba(0,0,0,0.85)'; ctx.fillRect(el.pos.x - 8, el.pos.y - 18, metrics.width + 16, 30);
+            ctx.strokeStyle = el.color; ctx.strokeRect(el.pos.x - 8, el.pos.y - 18, metrics.width + 16, 30);
+            ctx.fillStyle = '#ffffff'; ctx.textAlign = 'left'; ctx.fillText(el.text, el.pos.x, el.pos.y + 2);
+          }
+          ctx.restore();
+        });
+
+        if (isDrawing && tool === 'pen' && currentPoints.length > 1) {
+          ctx.save(); ctx.strokeStyle = strokeColor; ctx.lineWidth = lineWidth;
+          ctx.beginPath(); ctx.moveTo(currentPoints[0].x, currentPoints[0].y);
+          currentPoints.forEach((p) => ctx.lineTo(p.x, p.y));
+          ctx.stroke(); ctx.restore();
+        }
+      }, [history, isDrawing, currentPoints, location, strokeColor, lineWidth, tool, loadedImg]);
+
+      const getPoint = (e) => {
+        const canvas = canvasRef.current;
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.clientX - rect.left;
+        const clientY = e.clientY - rect.top;
+        return {
+          x: (clientX / rect.width) * canvas.width,
+          y: (clientY / rect.height) * canvas.height,
+        };
+      };
+
+      const handleWheel = (e) => {
+        e.preventDefault();
+        const zoomIntensity = 0.15;
+        let newScale = scale + (e.deltaY < 0 ? zoomIntensity : -zoomIntensity);
+        newScale = Math.max(1, Math.min(4, newScale));
+        setScale(newScale);
+        if (newScale === 1) setPan({ x: 0, y: 0 });
+      };
+
+      const handleMouseDown = (e) => {
+        if (tool === 'pan' || e.shiftKey || e.button === 1) {
+          setIsPanning(true);
+          setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+          return;
+        }
+
+        const pt = getPoint(e);
+        if (tool === 'marker') { setHistory(prev => [...prev, { type: 'marker', pos: pt, color: strokeColor, label: markerLabel }]); return; }
+        if (tool === 'text') { if (!customText.trim()) return; setHistory(prev => [...prev, { type: 'text', pos: pt, color: strokeColor, text: customText.trim() }]); return; }
+        
+        setIsDrawing(true);
+        setStartPos(pt);
+        setCurrentPoints([pt]);
+      };
+
+      const handleMouseMove = (e) => {
+        if (isPanning) {
+          setPan({ x: e.clientX - panStart.x, y: e.clientY - panStart.y });
+          return;
+        }
+        if (!isDrawing) return;
+        const pt = getPoint(e);
+        if (tool === 'pen') setCurrentPoints(prev => [...prev, pt]);
+      };
+
+      const handleMouseUp = (e) => {
+        if (isPanning) { setIsPanning(false); return; }
+        if (!isDrawing) return;
+        const endPt = getPoint(e);
+        setIsDrawing(false);
+        if (tool === 'pen' && currentPoints.length > 1) {
+          setHistory(prev => [...prev, { type: 'pen', color: strokeColor, width: lineWidth, points: currentPoints }]);
+        } else if (tool === 'arrow') {
+          setHistory(prev => [...prev, { type: 'arrow', color: strokeColor, width: lineWidth, start: startPos, end: endPt }]);
+        } else if (tool === 'circle') {
+          setHistory(prev => [...prev, { type: 'circle', color: strokeColor, width: lineWidth, start: startPos, end: endPt }]);
+        }
+        setCurrentPoints([]);
+      };
+
+      const handleDownload = () => {
+        const canvas = canvasRef.current; if (!canvas) return;
+        const link = document.createElement('a'); link.download = `HAZE_${location.name}.png`;
+        link.href = canvas.toDataURL('image/png'); link.click();
+      };
+
+      return (
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl bg-zinc-900/90 border border-white/10 backdrop-blur-md">
+            <div className="flex items-center gap-1">
+              {[
+                { id: 'pan', label: '✋ Лапка' },
+                { id: 'pen', label: 'Кисть' }, 
+                { id: 'arrow', label: 'Стрелка' }, 
+                { id: 'circle', label: 'Зона' },
+                { id: 'marker', label: 'Метка' }, 
+                { id: 'text', label: 'Текст' }
+              ].map((t) => (
+                <button key={t.id} onClick={() => setTool(t.id)} className={`px-3 py-1.5 rounded-xl text-xs font-mono uppercase tracking-wider transition-all duration-200 ${tool === t.id ? 'bg-white text-black font-bold shadow-[0_0_15px_rgba(255,255,255,0.4)]' : 'bg-black/40 text-zinc-400 hover:text-white'}`}>{t.label}</button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-2">
+              {tool === 'marker' && (
+                <div className="flex items-center gap-1">
+                  {['1', '2', '3', 'S', 'P', 'C'].map((lbl) => (
+                    <button key={lbl} onClick={() => setMarkerLabel(lbl)} className={`w-6 h-6 rounded text-xs font-bold transition ${markerLabel === lbl ? 'bg-white text-black' : 'bg-zinc-800 text-zinc-400'}`}>{lbl}</button>
+                  ))}
+                </div>
+              )}
+              {tool === 'text' && (
+                <input type="text" value={customText} onChange={(e) => setCustomText(e.target.value)} className="px-2.5 py-1 rounded-xl text-xs bg-black border border-white/20 text-white" />
+              )}
+              
+              {tool === 'pen' && (
+                <div className="flex items-center gap-1 bg-black/50 px-2 py-1 rounded-xl border border-white/10">
+                  <span className="text-[10px] font-mono text-zinc-400">Толщина:</span>
+                  {[6, 12, 20, 32].map((w) => (
+                    <button key={w} onClick={() => setLineWidth(w)} className={`px-2 py-0.5 rounded text-xs font-mono ${lineWidth === w ? 'bg-white text-black font-bold' : 'text-zinc-400 hover:text-white'}`}>{w}</button>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex items-center gap-1 px-2 py-1 rounded-xl bg-black/50 border border-white/10">
+                {['#ef4444', '#ffffff', '#38bdf8', '#facc15', '#22c55e'].map((c) => (
+                  <button key={c} onClick={() => setStrokeColor(c)} className={`w-5 h-5 rounded-full border transition-transform ${strokeColor === c ? 'border-white scale-125 shadow-lg' : 'border-transparent opacity-70'}`} style={{ backgroundColor: c }} />
+                ))}
+              </div>
+              
+              <div className="flex items-center gap-1 bg-black/60 px-2 py-1 rounded-xl border border-white/10 font-mono text-xs">
+                <button onClick={() => { setScale(s => Math.max(1, s - 0.5)); if(scale <= 1.5) setPan({x:0, y:0}); }} className="px-2 text-zinc-300 hover:text-white">-</button>
+                <span className="text-amber-400 font-bold">{Math.round(scale * 100)}%</span>
+                <button onClick={() => setScale(s => Math.min(4, s + 0.5))} className="px-2 text-zinc-300 hover:text-white">+</button>
+              </div>
+
+              <button onClick={() => setHistory(prev => prev.slice(0, -1))} className="px-3 py-1.5 rounded-xl text-xs font-mono bg-zinc-800 text-zinc-300 hover:text-white">Отмена</button>
+              <button onClick={() => setHistory([])} className="px-3 py-1.5 rounded-xl text-xs font-mono bg-red-500/10 text-red-400 border border-red-500/20">Очистить</button>
+              <button onClick={handleDownload} className="px-4 py-1.5 rounded-xl text-xs font-mono bg-white text-black font-bold hover:bg-zinc-200 transition">Скачать</button>
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-white/25 bg-black overflow-hidden shadow-[0_30px_70px_rgba(0,0,0,0.9)] relative group select-none h-[620px] flex items-center justify-center">
+            <div 
+              className={`w-full h-full overflow-hidden relative flex items-center justify-center ${tool === 'pan' ? 'cursor-grab active:cursor-grabbing' : 'cursor-crosshair'}`}
+              onWheel={handleWheel}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onContextMenu={(e) => e.preventDefault()}
+            >
+              <canvas
+                ref={canvasRef}
+                style={{
+                  transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})`,
+                  transformOrigin: 'center center',
+                  transition: isPanning ? 'none' : 'transform 0.1s ease-out',
+                  maxWidth: '100%',
+                  maxHeight: '100%',
+                  objectFit: 'contain'
+                }}
+                className="block"
+              />
+            </div>
+            <div className="absolute bottom-3 left-3 pointer-events-none px-3 py-1.5 rounded-xl bg-black/85 backdrop-blur-md border border-white/10 text-[10px] font-mono text-zinc-300 shadow-lg">
+              💡 Инструмент «✋ Лапка» для перемещения | Колесико мыши над картой — зум | Кнопки [- / +]
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function App() {
+      const [activeTab, setActiveTab] = useState('home');
+      const [selectedServer, setSelectedServer] = useState('Miami');
+      const [activeCategoryId, setActiveCategoryId] = useState('callouts');
+      const [activeLocationId, setActiveLocationId] = useState('callouts-0');
+      const [copiedKey, setCopiedKey] = useState(null);
+      const [introStep, setIntroStep] = useState(1);
+      const [showLicenseModal, setShowLicenseModal] = useState(false);
+      const [showDevModal, setShowDevModal] = useState(false);
+      const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
+      useEffect(() => {
+        const handleMove = (e) => setMousePos({ x: e.clientX, y: e.clientY });
+        window.addEventListener('mousemove', handleMove);
+        return () => window.removeEventListener('mousemove', handleMove);
+      }, []);
+
+      const copyText = (val, key) => {
+        navigator.clipboard?.writeText(val);
+        setCopiedKey(key);
+        setTimeout(() => setCopiedKey(null), 2000);
+      };
+
+      const activeCategory = MAP_CATEGORIES.find(c => c.id === activeCategoryId) || MAP_CATEGORIES[0];
+      const allLocs = activeCategory.groups.flatMap(g => g.items);
+      const activeLoc = allLocs.find(l => l.id === activeLocationId) || allLocs[0];
+      const displayedServers = selectedServer === 'All' ? ['Miami', 'Memphis'] : [selectedServer];
+
+      return (
+        <div className="min-h-screen bg-[#030305] text-zinc-100 font-sans relative overflow-x-hidden">
+          <div className="fixed inset-0 pointer-events-none transition-opacity duration-500 z-0" style={{ background: `radial-gradient(700px circle at ${mousePos.x}px ${mousePos.y}px, rgba(255,255,255,0.04), transparent 65%)` }} />
+
+          {/* Стартовый дисклеймер */}
+          {introStep > 0 && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/92 backdrop-blur-3xl animate-fade">
+              <div className="max-w-xl w-full glass-card p-8 md:p-10 rounded-3xl space-y-6 border-white/25 shadow-[0_0_100px_rgba(0,0,0,0.9)]">
+                <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                  <span className="font-mono text-xs font-bold tracking-widest text-amber-400 uppercase">
+                    {introStep === 1 ? 'ПРАВОВОЙ ДИСКЛЕЙМЕР // 01' : 'ТЕХНИЧЕСКИЙ ОТДЕЛ // 02'}
+                  </span>
+                  <span className="font-mono text-xs text-zinc-500">HAZE v0.1 BETA</span>
+                </div>
+
+                {introStep === 1 ? (
+                  <div className="space-y-4">
+                    <h2 className="font-display text-xl font-black text-white">ОТКАЗ ОТ ПРАВ (ROCKSTAR GAMES)</h2>
+                    <div className="space-y-3 text-xs text-zinc-300 leading-relaxed max-h-56 overflow-y-auto pr-2">
+                      <p>Данный веб-портал создан исключительно для участников криминального сообщества <strong>HAZE</strong> на проекте <strong>Majestic RP (Miami #8 & Memphis #19)</strong>.</p>
+                      <p>Сайт <strong>не аффилирован и не связан</strong> с компаниями Rockstar Games, Take-Two Interactive или разработчиками GTA V.</p>
+                      <p>Все материалы, логотипы и карты используются исключительно для внутренней координации семейных операций.</p>
+                    </div>
+                    <div className="flex flex-col gap-2 pt-2">
+                      <button onClick={() => setIntroStep(2)} className="w-full py-4 rounded-2xl bg-white text-black font-display font-bold text-xs uppercase tracking-widest hover:bg-zinc-200 transition shadow-[0_0_30px_rgba(255,255,255,0.4)]">
+                        ОЗНАКОМЛЕН, ДАЛЕЕ →
+                      </button>
+                      <button onClick={() => { setShowLicenseModal(true); }} className="text-center font-mono text-[11px] text-zinc-400 hover:text-white underline pt-1">
+                        Открыть полную лицензию и правовую информацию
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <h2 className="font-display text-xl font-black text-white">БАГИ И УЛУЧШЕНИЯ</h2>
+                    <p className="text-xs text-zinc-300 leading-relaxed">
+                      Если вы обнаружили баг, проблему с отображением карт или хотите предложить идею по улучшению портала, свяжитесь с разработчиком.
+                    </p>
+                    <div className="p-4 rounded-2xl bg-zinc-900 border border-cyan-500/30 text-xs font-mono space-y-1.5">
+                      <div>Разработчик сайта: <strong className="text-white">winston haze</strong></div>
+                      <div>Discord для связи: <strong className="text-cyan-400 font-bold">k_5504</strong></div>
+                    </div>
+                    <div className="flex flex-col gap-2 pt-2">
+                      <div className="flex gap-2">
+                        <button onClick={() => setIntroStep(1)} className="px-5 py-3.5 rounded-2xl bg-zinc-800 text-xs font-mono">НАЗАД</button>
+                        <button onClick={() => setIntroStep(0)} className="flex-1 py-3.5 rounded-2xl bg-cyan-400 text-black font-display font-bold text-xs uppercase tracking-wider hover:bg-cyan-300 transition">ВОЙТИ НА ПОРТАЛ</button>
+                      </div>
+                      <button onClick={() => { setShowDevModal(true); }} className="text-center font-mono text-[11px] text-cyan-400 hover:underline pt-1">
+                        Открыть подробный раздел DEV
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ЛИЦЕНЗИЯ */}
+          {showLicenseModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/88 backdrop-blur-2xl animate-fade">
+              <div className="max-w-3xl w-full glass-card p-8 md:p-10 rounded-3xl space-y-6 border-white/30 shadow-[0_0_80px_rgba(0,0,0,0.9)] relative">
+                <div className="flex justify-between items-center border-b border-white/10 pb-4">
+                  <div className="flex items-center gap-3">
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" />
+                    <h3 className="font-display text-lg font-bold text-white">ПРАВОВАЯ ИНФОРМАЦИЯ И ПОЛЬЗОВАТЕЛЬСКОЕ СОГЛАШЕНИЕ</h3>
+                  </div>
+                  <button onClick={() => setShowLicenseModal(false)} className="w-8 h-8 rounded-xl bg-white/10 text-white flex items-center justify-center font-mono hover:bg-white/20 transition">✕</button>
+                </div>
+                <div className="space-y-4 text-xs text-zinc-300 leading-relaxed max-h-[450px] overflow-y-auto pr-2">
+                  <h4 className="text-white font-bold uppercase">1. Статус закрытого портала семьи HAZE</h4>
+                  <p>Веб-портал <strong>HAZE</strong> разработан исключительно для участников криминального сообщества на проекте <strong>Majestic RP (Miami #8 & Memphis #19)</strong>. Доступ к ресурсу носит внутренний характер.</p>
+                  <h4 className="text-white font-bold uppercase">2. Правовой статус и отсутствие аффилированности</h4>
+                  <p>Сайт <strong>не связан, не поддерживается и не аффилирован</strong> с компаниями Rockstar Games, Take-Two Interactive, а также с официальной администрацией проекта Majestic RP.</p>
+                </div>
+                <button onClick={() => setShowLicenseModal(false)} className="w-full py-4 rounded-2xl bg-white text-black font-display font-bold text-xs uppercase tracking-widest hover:bg-zinc-200 transition">ЗАКРЫТЬ ДОКУМЕНТ</button>
+              </div>
+            </div>
+          )}
+
+          {/* DEV */}
+          {showDevModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/88 backdrop-blur-2xl animate-fade">
+              <div className="max-w-2xl w-full glass-card p-8 md:p-10 rounded-3xl space-y-6 border-cyan-500/40 shadow-[0_0_80px_rgba(6,182,212,0.2)]">
+                <div className="flex justify-between items-center border-b border-white/10 pb-4">
+                  <div className="flex items-center gap-3">
+                    <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse" />
+                    <h3 className="font-display text-lg font-bold text-white">DEV // ТЕХНИЧЕСКИЙ ОТДЕЛ И ЛОГИ</h3>
+                  </div>
+                  <button onClick={() => setShowDevModal(false)} className="w-8 h-8 rounded-xl bg-white/10 text-white flex items-center justify-center font-mono hover:bg-white/20 transition">✕</button>
+                </div>
+                <div className="space-y-4 text-xs text-zinc-300 leading-relaxed max-h-[450px] overflow-y-auto pr-2">
+                  <div className="p-4 rounded-2xl bg-zinc-900 border border-cyan-500/30 text-xs font-mono space-y-2">
+                    <div>Разработчик: <strong className="text-white">winston haze</strong></div>
+                    <div>Discord: <strong className="text-cyan-400 font-bold text-sm">k_5504</strong></div>
+                    <div>Статус: <span className="text-emerald-400 font-bold">АКТИВЕН</span></div>
+                    <div>Версия: <span className="text-amber-400 font-bold">v0.1 Beta</span></div>
+                  </div>
+                  <div className="space-y-1 pt-2">
+                    <h4 className="text-white font-bold uppercase">Журнал изменений сборки (Changelog):</h4>
+                    <p className="text-zinc-400 font-mono text-[11px]">v0.1 Beta: Самая первая версия портала, изменений нет.</p>
+                  </div>
+                </div>
+                <button onClick={() => copyText('k_5504', 'dev-copy-modal')} className="w-full py-4 rounded-2xl bg-cyan-400 text-black font-display font-bold text-xs uppercase tracking-widest hover:bg-cyan-300 transition">
+                  {copiedKey === 'dev-copy-modal' ? 'ДИСКОРД СКОПИРОВАН ✓' : 'СКОПИРОВАТЬ ДИСКОРД (k_5504)'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Хэдер */}
+          <header className="sticky top-0 z-40 border-b border-white/10 bg-[#030305]/85 backdrop-blur-2xl">
+            <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="font-display font-black text-xl tracking-widest text-white">HAZE</div>
+                <span className="px-2 py-0.5 rounded bg-amber-500/15 border border-amber-500/40 font-mono text-[10px] text-amber-300 font-bold">v0.1 Beta</span>
+              </div>
+
+              <nav className="hidden md:flex items-center gap-1.5 p-1.5 rounded-2xl glass-card">
+                {[{ id: 'home', label: 'Главная' }, { id: 'roster', label: 'Состав' }, { id: 'maps', label: 'Карты' }, { id: 'recruit', label: 'Набор' }].map(t => (
+                  <button key={t.id} onClick={() => setActiveTab(t.id)} className={`px-5 py-2.5 rounded-xl text-xs font-mono uppercase tracking-wider transition-all duration-300 ${activeTab === t.id ? 'bg-white text-black font-bold shadow-[0_0_20px_rgba(255,255,255,0.3)]' : 'text-zinc-400 hover:text-white'}`}>{t.label}</button>
+                ))}
+              </nav>
+
+              <div className="flex items-center gap-2.5">
+                <button onClick={() => setShowLicenseModal(true)} className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white hover:text-black text-white font-mono text-xs font-bold uppercase transition duration-300 border border-white/15 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse inline-block" />
+                  <span>Лицензия</span>
+                </button>
+                <button onClick={() => setShowDevModal(true)} className="px-4 py-2 rounded-xl bg-cyan-950/40 hover:bg-cyan-900/60 text-cyan-300 font-mono text-xs font-bold uppercase transition duration-300 border border-cyan-500/30 flex items-center gap-2 shadow-[0_0_15px_rgba(6,182,212,0.15)]">
+                  <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse inline-block" />
+                  <span>DEV</span>
+                </button>
+              </div>
+            </div>
+          </header>
+
+          {/* Основной контент */}
+          <main className="max-w-7xl mx-auto px-6 py-10 animate-fade">
+            {activeTab === 'home' && (
+              <div className="glass-card p-10 md:p-16 rounded-3xl space-y-8 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl pointer-events-none animate-float" />
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white/10 font-mono text-xs text-white uppercase tracking-widest">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  MAJESTIC RP // MIAMI #8 & MEMPHIS #19
+                </div>
+                <div className="space-y-4 max-w-3xl">
+                  <h1 className="font-display text-6xl md:text-8xl font-black text-white tracking-tighter">HAZE</h1>
+                  <p className="text-zinc-300 text-base md:text-lg leading-relaxed">
+                    Закрытый элитный портал семьи <strong className="text-white">HAZE</strong>. Тактическая координация состава и оперативное управление на серверах.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-4 pt-4">
+                  <button onClick={() => setActiveTab('maps')} className="px-8 py-4 rounded-2xl bg-white text-black font-display font-bold text-xs uppercase tracking-widest hover:bg-zinc-200 transition shadow-[0_0_30px_rgba(255,255,255,0.4)]">Открыть карты и тактики →</button>
+                  <button onClick={() => setActiveTab('roster')} className="px-8 py-4 rounded-2xl glass-card text-white font-mono text-xs uppercase tracking-widest hover:border-white/40 transition">Состав руководства</button>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'roster' && (
+              <div className="space-y-10">
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-white/10 pb-6">
+                  <div>
+                    <div className="font-mono text-xs text-zinc-400 tracking-widest uppercase mb-1">УПРАВЛЕНИЕ СЕМЬЕЙ</div>
+                    <h2 className="font-display text-3xl md:text-4xl font-black text-white">РУКОВОДСТВО СЕМЬИ</h2>
+                  </div>
+                  <div className="flex gap-2 p-1.5 glass-card rounded-2xl">
+                    {['Miami', 'Memphis', 'All'].map(s => (
+                      <button key={s} onClick={() => setSelectedServer(s)} className={`px-5 py-2.5 rounded-xl font-mono text-xs font-bold uppercase transition ${selectedServer === s ? 'bg-white text-black shadow-lg' : 'text-zinc-400 hover:text-white'}`}>{s === 'All' ? 'Все сервера' : s}</button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-12">
+                  {displayedServers.map(srvKey => {
+                    const roster = LEADERSHIP_DATA[srvKey];
+                    return (
+                      <div key={srvKey} className="space-y-6">
+                        <div className="font-mono text-xs text-zinc-400 uppercase tracking-widest border-b border-white/10 pb-2">Крыло: {roster.serverTitle}</div>
+                        <div className="glass-card p-6 md:p-8 rounded-3xl leader-card-glow bg-gradient-to-r from-amber-500/15 via-transparent to-transparent flex flex-col md:flex-row md:items-center justify-between gap-6">
+                          <div className="space-y-1.5">
+                            <span className="px-3.5 py-1 rounded-full bg-amber-400/20 border border-amber-400/60 text-amber-300 font-mono text-[10px] font-bold tracking-widest uppercase">ЛИДЕР СЕМЬИ</span>
+                            <h3 className="font-display text-2xl font-bold text-white">{roster.leader.nick}</h3>
+                            <div className="font-mono text-xs text-zinc-400">Static ID: #{roster.leader.staticId}</div>
+                          </div>
+                          <button onClick={() => copyText(roster.leader.discord, `l-${srvKey}`)} className="px-6 py-3 rounded-xl bg-amber-400 text-black font-mono text-xs font-bold uppercase hover:bg-amber-300 transition">
+                            {copiedKey === `l-${srvKey}` ? 'СКОПИРОВАНО ✓' : `ДС: ${roster.leader.discord}`}
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                          {roster.owners.map(m => {
+                            const isColler = m.badgeType === 'coller';
+                            const isDev = m.badgeType === 'dev';
+                            const cardStyle = isDev ? 'dev-card-glow bg-cyan-950/20' : isColler ? 'coller-card-glow bg-red-950/20' : 'border-white/15';
+                            return (
+                              <div key={m.staticId} className={`glass-card p-6 rounded-3xl flex flex-col justify-between gap-6 ${cardStyle}`}>
+                                <div className="space-y-4">
+                                  <div className="flex justify-between items-center">
+                                    <span className={`px-3.5 py-1 rounded-full font-mono text-[10px] font-bold uppercase tracking-wider ${isDev ? 'bg-cyan-400/20 text-cyan-300 border border-cyan-400/60' : isColler ? 'bg-red-500/20 text-red-300 border border-red-500/60' : 'bg-white/10 text-zinc-300'}`}>{m.badgeText}</span>
+                                    <span className="font-mono text-xs text-zinc-500">#{m.staticId}</span>
+                                  </div>
+                                  <div className="space-y-1">
+                                    <h4 className="font-display text-lg font-bold text-white">{m.nick}</h4>
+                                    <div className="font-mono text-xs text-zinc-400">{m.role}</div>
+                                  </div>
+                                  <p className="text-xs text-zinc-300 leading-relaxed">{m.subNote}</p>
+                                </div>
+                                <div className="pt-4 border-t border-white/10 flex justify-between items-center">
+                                  <span className="font-mono text-xs text-zinc-400">DS: <strong className="text-white">{m.discord}</strong></span>
+                                  <button onClick={() => copyText(m.discord, m.staticId)} className="px-4 py-2 rounded-xl font-mono text-xs font-bold bg-white/10 hover:bg-white hover:text-black text-white transition">
+                                    {copiedKey === m.staticId ? 'СКОПИРОВАНО ✓' : 'КОПИРОВАТЬ'}
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'maps' && (
+              <div className="space-y-6">
+                <div className="flex justify-between items-end border-b border-white/10 pb-4">
+                  <div>
+                    <div className="font-mono text-xs text-zinc-400 tracking-widest uppercase">ТАКТИЧЕСКИЙ ПЛАНШЕТ</div>
+                    <h2 className="font-display text-3xl font-black text-white">КАРТЫ И СХЕМЫ</h2>
+                  </div>
+                  <div className="px-4 py-1.5 rounded-xl bg-red-500/20 border border-red-500/50 text-red-400 font-mono text-xs font-bold tracking-widest animate-pulse">
+                    ОСНОВНОЙ КОЛЛЕР: SWAPPER HAZE
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                  <div className="lg:col-span-3 space-y-4">
+                    <div className="glass-card p-4 rounded-3xl space-y-1">
+                      {MAP_CATEGORIES.map(cat => {
+                        const isActive = cat.id === activeCategoryId;
+                        return (
+                          <button key={cat.id} onClick={() => { setActiveCategoryId(cat.id); setActiveLocationId(cat.groups[0].items[0].id); }} className={`w-full px-4 py-3 rounded-2xl text-left text-xs font-sans flex items-center gap-3 transition ${isActive ? 'bg-white text-black font-bold shadow-lg' : 'text-zinc-400 hover:text-white hover:bg-white/5'}`}>
+                            <CategoryIcon id={cat.id} active={isActive} /><span>{cat.name}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="glass-card p-4 rounded-3xl max-h-[500px] overflow-y-auto space-y-4">
+                      {activeCategory.groups.map(g => (
+                        <div key={g.title} className="space-y-2">
+                          <div className="font-mono text-[10px] text-zinc-500 uppercase tracking-widest px-1">{g.title}</div>
+                          <div className="space-y-1">
+                            {g.items.map(loc => {
+                              const isSel = loc.id === activeLoc.id;
+                              return (
+                                <button key={loc.id} onClick={() => setActiveLocationId(loc.id)} className={`w-full px-3.5 py-2.5 rounded-xl text-xs text-left font-sans flex justify-between items-center transition ${isSel ? 'bg-white/20 text-white font-bold border border-white/40' : 'text-zinc-400 hover:text-white hover:bg-white/5'}`}>
+                                  <span>{loc.name}</span><span className="font-mono text-[10px] text-zinc-500">{loc.code}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="lg:col-span-9 space-y-5">
+                    <div className="glass-card p-6 md:p-8 rounded-3xl space-y-6">
+                      <div className="flex justify-between items-center border-b border-white/10 pb-4">
+                        <div>
+                          <div className="font-mono text-xs text-zinc-400 uppercase tracking-widest">{activeCategory.name} // {activeLoc.code}</div>
+                          <h3 className="font-display text-2xl md:text-3xl font-bold text-white mt-0.5">{activeLoc.name}</h3>
+                        </div>
+                        <span className="px-4 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-mono text-xs">ДОСКА АКТИВНА</span>
+                      </div>
+                      <TacticalMapCanvas location={activeLoc} />
+                      <div className="p-5 rounded-2xl bg-black/50 border border-white/15 space-y-1.5">
+                        <div className="font-mono text-[11px] text-zinc-400 uppercase tracking-widest">ТАКТИЧЕСКАЯ СВОДКА:</div>
+                        <p className="text-sm text-zinc-200 leading-relaxed">{activeLoc.tacticSummary}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'recruit' && (
+              <div className="max-w-4xl mx-auto space-y-10">
+                <div className="text-center space-y-3">
+                  <h2 className="font-display text-4xl md:text-5xl font-black text-white">ПОДАЧА ЗАЯВКИ В СЕМЬЮ</h2>
+                  <p className="text-zinc-400 text-base">Вступление в ряды HAZE происходит строго через официальный защищенный Discord-сервер.</p>
+                </div>
+                <div className="glass-card p-10 md:p-14 rounded-3xl space-y-10 border-white/25">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="p-6 rounded-2xl bg-zinc-900/90 border border-white/15 space-y-3">
+                      <div className="font-mono text-xs text-zinc-400 font-bold">ЭТАП 01</div>
+                      <div className="font-display font-bold text-base text-white">ПЕРЕХОД В DISCORD</div>
+                      <p className="text-xs text-zinc-300">Подключение к официальному каналу связи семьи.</p>
+                    </div>
+                    <div className="p-6 rounded-2xl bg-zinc-900/90 border border-white/15 space-y-3">
+                      <div className="font-mono text-xs text-zinc-400 font-bold">ЭТАП 02</div>
+                      <div className="font-display font-bold text-base text-white">АНКЕТА</div>
+                      <p className="text-xs text-zinc-300">Укажите статик, возраст и игровой опыт.</p>
+                    </div>
+                    <div className="p-6 rounded-2xl bg-zinc-900/90 border border-white/15 space-y-3">
+                      <div className="font-mono text-xs text-zinc-400 font-bold">ЭТАП 03</div>
+                      <div className="font-display font-bold text-base text-white">ИНВАЙТ</div>
+                      <p className="text-xs text-zinc-300">Пройдите собеседование с рекрутером.</p>
+                    </div>
+                  </div>
+                  <div className="flex justify-center gap-4">
+                    <a href="https://discord.gg/Gjvw3kNDTC" target="_blank" rel="noreferrer" className="px-10 py-5 rounded-2xl bg-white text-black font-display font-bold text-xs uppercase tracking-widest hover:bg-zinc-200 transition text-center">ПЕРЕЙТИ В ДИСКОРД →</a>
+                  </div>
+                </div>
+              </div>
+            )}
+          </main>
+
+          {/* Футер */}
+          <footer className="border-t border-white/10 mt-24 py-12 text-center bg-[#030305]/90">
+            <div className="max-w-7xl mx-auto px-6 space-y-4 text-xs text-zinc-400 font-mono">
+              <div>Закрытое комьюнити семьи HAZE (Majestic RP Miami #8 & Memphis #19)</div>
+              <div>Разработчик сайта: winston haze (дс k_5504)</div>
+              <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
+                <button onClick={() => setShowLicenseModal(true)} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-300 transition">
+                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse inline-block" />
+                  <span>Лицензия и правовая информация</span>
+                </button>
+                <button onClick={() => setShowDevModal(true)} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-950/40 hover:bg-cyan-900/60 border border-cyan-500/30 text-cyan-300 transition shadow-[0_0_15px_rgba(6,182,212,0.15)]">
+                  <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse inline-block" />
+                  <span>DEV // Связь с разработчиком</span>
+                </button>
+              </div>
+              <div className="text-[10px] text-zinc-600 pt-2">Сайт не связан с Rockstar Games. Все права принадлежат правообладателям.</div>
+            </div>
+          </footer>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
